@@ -1,3 +1,6 @@
+# packaged site packages and files to be uploaded to AWS
+*.zip
+
 # Local .terraform directories
 **/.terraform/*
 
