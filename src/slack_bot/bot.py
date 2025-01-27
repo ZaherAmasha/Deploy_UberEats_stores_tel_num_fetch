@@ -30,4 +30,4 @@ def send_fetched_phone_numbers_to_slack_channel():
         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
 
 
-send_fetched_phone_numbers_to_slack_channel()
+# send_fetched_phone_numbers_to_slack_channel()
