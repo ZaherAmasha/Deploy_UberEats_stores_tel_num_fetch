@@ -1,3 +1,5 @@
 requests==2.32.3
 python-dotenv==1.0.1
 slack_sdk==3.34.0
+boto3==1.36.11
+boto3-stubs[dynamodb]==1.36.11
