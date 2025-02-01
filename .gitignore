@@ -1,3 +1,6 @@
+# folder containing the scraped data
+data/
+
 # packaged site packages and files to be uploaded to AWS
 *.zip
 
