@@ -6,7 +6,7 @@ logging.basicConfig(
     level=logging.INFO,
     # format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        # logging.FileHandler("./log_file3.log"),
+        logging.FileHandler("./logs/log_file1.log"),
         logging.StreamHandler(sys.stdout),
     ],
 )

@@ -9,12 +9,13 @@ from mypy_boto3_dynamodb import ServiceResource
 dynamodb_client: ServiceResource = boto3.resource("dynamodb")
 table = dynamodb_client.Table("UberEats_scraped_stores_data")
 
-from logger import logger
+from utils.logger import logger
 
 
 def get_batch_of_unprocessed_stores(limit=1000):
     stores = []
     last_evaluated_key = None
+    call_count = 0
 
     # .scan() can return up to 100 items at a time, so we have to do multiple requests to get our desired batch size
     # it will return "LastEvaluatedKey" if there are more items obtained from the scan but were not sent. If so,
@@ -44,15 +45,27 @@ def get_batch_of_unprocessed_stores(limit=1000):
             scan_params["ExclusiveStartKey"] = last_evaluated_key
 
         response = table.scan(**scan_params)
-
+        call_count += 1
+        logger.debug(f"Called the Scan method {call_count} times")
         stores.extend(response.get("Items", []))
         last_evaluated_key = response.get("LastEvaluatedKey")
 
         if not last_evaluated_key:
             break  # Stop if there are no more items
-    logger.debug(f"These are the fetched stores: {stores}")
-    logger.info(f"Fetched {len(stores)} stores")
-    return stores
+
+    logger.debug(f"These are the fetched stores before list transformation: {stores}")
+
+    # Manually choosing the order of the keys to be displayed in the Google Sheet later
+    headers = ["name", "area/city", "address", "phone_number", "description", "status"]
+
+    # Including the headers to be displayed too. And transforming the stores from List[Dict] to List[List]
+    stores_list = [headers] + [[store[key] for key in headers] for store in stores]
+
+    logger.debug(
+        f"These are the fetched stores after list tranformation: {stores_list}"
+    )
+    logger.info(f"Fetched {len(stores_list)} stores")
+    return stores_list
 
 
 # Example Usage:
