@@ -7,6 +7,7 @@ import aiohttp
 from dotenv import load_dotenv
 
 from utils.logger import logger
+from models.store import Store
 
 load_dotenv()
 
@@ -54,13 +55,13 @@ async def get_phone_number_from_google_maps(
 
 
 # we have a max of 600 requests per minute per method per project for Places API (new)
-async def async_get_phone_numbers_for_batch_of_stores(stores: List[List]):
+async def async_get_phone_numbers_for_batch_of_stores(stores: List[Store]):
     async with aiohttp.ClientSession() as session:
         tasks = []
 
         for store in stores:
             task = asyncio.create_task(
-                get_phone_number_from_google_maps(session, store[0], store[2])
+                get_phone_number_from_google_maps(session, store.name, store.address)
             )
             tasks.append(task)
 
@@ -71,7 +72,7 @@ async def async_get_phone_numbers_for_batch_of_stores(stores: List[List]):
 
 
 # sync wrapper for the above async method, abstracting away the async functionality in the main.py
-def get_phone_numbers_for_batch_of_stores(stores: List[List]):
+def get_phone_numbers_for_batch_of_stores(stores: List[Store]):
     results = asyncio.run(async_get_phone_numbers_for_batch_of_stores(stores))
     return results
 
