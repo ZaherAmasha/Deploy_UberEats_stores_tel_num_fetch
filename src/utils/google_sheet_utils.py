@@ -44,10 +44,18 @@ def _create_google_sheet():
     return workbook, sheet, workbook_url
 
 
-def populate_google_sheet(stores: List[Dict]):
+def populate_google_sheet(stores: List[Dict], fetched_phone_numbers: List[str]):
     workbook, sheet, sheet_url = _create_google_sheet()
 
     num_of_stores = len(stores)
+
+    # Adding the phone numbers found using Google Places API to the data to be put in the Google Sheet
+    clickable_phone_numbers = []
+    for i, store in enumerate(stores[1:]):  # without header row
+        num = fetched_phone_numbers[i]
+        hyperlink_formula = f'=HYPERLINK("https://call.ctrlq.org/{num}", "{num}")'  # using tel: or telprompt: doesn't work here
+        store[3] = hyperlink_formula
+        clickable_phone_numbers.append([hyperlink_formula])
 
     # Adding a column to the data for the manually constructed URL for each store on Google Maps for better UX
     stores[0].append("Google Maps URL")  # adding it to the headers row
@@ -97,8 +105,9 @@ def populate_google_sheet(stores: List[Dict]):
     # batch_format is for the formatting
     sheet.batch_format(formats)
 
-    # Another update just for the hyperlinks to enforce the rendering
+    # Update hyperlinks with raw=False to ensure formula evaluation instead of rendering as text
     sheet.update(hyperlinked_urls, range_name=f"G2:G{num_of_stores}", raw=False)
+    sheet.update(clickable_phone_numbers, range_name=f"D2:D{num_of_stores}", raw=False)
 
     # For columns:    A ,  B ,  C ,  D ,  E ,  F,   G
     column_widths = [250, 200, 400, 180, 350, 140, 200]  # in pixels
