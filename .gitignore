@@ -1,3 +1,6 @@
+# google credentials json file to use Google APIs
+google_credentials.json
+
 # folder containing the scraped data
 data/
 
