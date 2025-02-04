@@ -17,24 +17,26 @@ def get_batch_of_unprocessed_stores(limit=1000):
     last_evaluated_key = None
     call_count = 0
 
-    # .scan() can return up to 100 items at a time, so we have to do multiple requests to get our desired batch size
-    # it will return "LastEvaluatedKey" if there are more items obtained from the scan but were not sent. If so,
-    # we keep scanning starting from this "LastEvaluatedKey" till it's not returned anymore or we reach our batch limit.
+    # .query() can return up to 100 items at a time, so we have to do multiple requests to get our desired batch size
+    # it will return "LastEvaluatedKey" if there are more items obtained from the query but were not sent. If so,
+    # we keep querying starting from this "LastEvaluatedKey" till it's not returned anymore or we reach our batch limit.
     # The max is 1MB of data but I'm setting it to 100 items here for simplicity and to fetch only the number of items needed.
-    # Using a larger limit doesn't guarantee that we'll get the full number of items, due to the pagination in the scan process.
+    # Using a larger limit doesn't guarantee that we'll get the full number of items, due to the pagination in the query process.
+    # using .query() with the GSI is much faster than using .scan().
     while len(stores) < limit:
 
         # This is analogous to SQL SELECT * FROM UberEatsStores WHERE status = 'pending' LIMIT limit;
         scan_params = {
+            "IndexName": "status-index",  # This is defined as a Global Secondary Index (GSI) when creating the table
             "Limit": min(
                 limit - len(stores), 100
             ),  # 100 because is the maximum, and the substraction is to not fetch
             # more data that we need to.
-            "FilterExpression": "#s = :s",
+            "KeyConditionExpression": "#s = :s",
             "ExpressionAttributeNames": {
                 "#s": "status"
             },  # defines '#s' as an alias for 'status'. Not mandatory to define aliases for Names but we can't use
-            #'status' here directly in the FilterExpression because it's a reserved keyword by Dynamodb
+            #'status' here directly in the KeyConditionExpression because it's a reserved keyword by Dynamodb
             "ExpressionAttributeValues": {
                 ":s": "pending"
             },  # defines ':s' as an alias for 'pending', it's mandatory to define aliases for values because Dynamodb
@@ -44,9 +46,12 @@ def get_batch_of_unprocessed_stores(limit=1000):
         if last_evaluated_key:
             scan_params["ExclusiveStartKey"] = last_evaluated_key
 
-        response = table.scan(**scan_params)
+        response = table.query(**scan_params)
+
         call_count += 1
-        logger.debug(f"Called the Scan method {call_count} times")
+        logger.debug(
+            f"Called the Scan method {call_count} times, this is the length of the stores so far: {len(stores)}"
+        )
         stores.extend(response.get("Items", []))
         last_evaluated_key = response.get("LastEvaluatedKey")
 
@@ -56,7 +61,15 @@ def get_batch_of_unprocessed_stores(limit=1000):
     logger.debug(f"These are the fetched stores before list transformation: {stores}")
 
     # Manually choosing the order of the keys to be displayed in the Google Sheet later
-    headers = ["name", "area/city", "address", "phone_number", "description", "status"]
+    headers = [
+        "name",
+        "area/city",
+        "address",
+        "phone_number",
+        "description",
+        "status",
+        # "Google Maps URL", # we are adding this later in the google_sheet_utils.py file
+    ]
 
     # Including the headers to be displayed too. And transforming the stores from List[Dict] to List[List]
     stores_list = [headers] + [[store[key] for key in headers] for store in stores]
