@@ -1,6 +1,7 @@
 import boto3
-from typing import List, Dict
+from typing import List
 import time
+from datetime import datetime
 
 # for type hinting, using the boto3 stubs library. See this for more info:
 # https://stackoverflow.com/questions/49563445/type-annotation-for-boto3-resources-like-dynamodb-table
@@ -10,9 +11,10 @@ dynamodb_client: ServiceResource = boto3.resource("dynamodb")
 table = dynamodb_client.Table("UberEats_scraped_stores_data")
 
 from utils.logger import logger
+from models.store import Store
 
 
-def get_batch_of_unprocessed_stores(limit=1000):
+def get_batch_of_unprocessed_stores(limit=1000) -> List[Store]:
     stores = []
     last_evaluated_key = None
     call_count = 0
@@ -49,36 +51,27 @@ def get_batch_of_unprocessed_stores(limit=1000):
         response = table.query(**scan_params)
 
         call_count += 1
+
+        # Pydantic will validate every item as it's converted
+        try:
+            stores.extend(
+                [Store.from_dynamodb_item(store) for store in response.get("Items", [])]
+            )
+        except Exception as e:
+            logger.error(f"Error parsing stores: {e}")
+
         logger.debug(
             f"Called the Scan method {call_count} times, this is the length of the stores so far: {len(stores)}"
         )
-        stores.extend(response.get("Items", []))
+
         last_evaluated_key = response.get("LastEvaluatedKey")
 
         if not last_evaluated_key:
             break  # Stop if there are no more items
 
-    logger.debug(f"These are the fetched stores before list transformation: {stores}")
+    logger.info(f"Fetched {len(stores)} stores")
 
-    # Manually choosing the order of the keys to be displayed in the Google Sheet later
-    headers = [
-        "name",
-        "area/city",
-        "address",
-        "phone_number",
-        "description",
-        "status",
-        # "Google Maps URL", # we are adding this later in the google_sheet_utils.py file
-    ]
-
-    # Including the headers to be displayed too. And transforming the stores from List[Dict] to List[List]
-    stores_list = [headers] + [[store[key] for key in headers] for store in stores]
-
-    logger.debug(
-        f"These are the fetched stores after list tranformation: {stores_list}"
-    )
-    logger.info(f"Fetched {len(stores_list)} stores")
-    return stores_list
+    return stores
 
 
 # Example Usage:
@@ -86,23 +79,14 @@ def get_batch_of_unprocessed_stores(limit=1000):
 # print(f"These are the fetched stores: {stores}, with length: {len(stores)}")
 
 
-def update_status_of_items_to_processed_in_DB(stores: List[Dict]):
+def update_status_of_items_to_processed_in_DB(stores: List[Store]):
     start_time = time.time()
 
     with table.batch_writer() as batch:
         for store in stores:
-            item = {
-                "store_id": store["store_id"],
-                "name": store["name"],
-                "address": store["address"],
-                "rating": store["rating"],
-                "description": store["description"],
-                "area/city": store["area/city"],
-                "phone_number": None,  # Will be updated later
-                "status": "processed",  # Mark as processed
-                "last_processed_at": None,
-            }
-            batch.put_item(Item=item)
+            store.last_processed_at = str(datetime.now())
+
+            batch.put_item(store.to_dynamodb_item())
 
     logger.info(f"Updated {len(stores)} stores' status to processed in DynamoDB")
     logger.info(

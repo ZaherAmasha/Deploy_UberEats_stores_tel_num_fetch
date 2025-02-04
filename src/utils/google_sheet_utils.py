@@ -1,10 +1,12 @@
-from typing import List, Dict
+from typing import List
 import datetime
 
 import gspread
 from google.oauth2.service_account import Credentials
 
 from utils.logger import logger
+from utils.common_utils import transform_stores_list_to_sheet_row_format
+from models.store import Store
 
 
 def _create_google_sheet():
@@ -44,34 +46,30 @@ def _create_google_sheet():
     return workbook, sheet, workbook_url
 
 
-def populate_google_sheet(stores: List[Dict], fetched_phone_numbers: List[str]):
+def populate_google_sheet(stores: List[Store]):
+    """Creates and Populates a Google Sheet with processed stores data to be sent to the Slack channel"""
     workbook, sheet, sheet_url = _create_google_sheet()
 
     num_of_stores = len(stores)
 
     # Adding the phone numbers found using Google Places API to the data to be put in the Google Sheet
     clickable_phone_numbers = []
-    for i, store in enumerate(stores[1:]):  # without header row
-        num = fetched_phone_numbers[i]
+    for store in stores:
+        num = store.phone_number
         hyperlink_formula = f'=HYPERLINK("https://call.ctrlq.org/{num}", "{num}")'  # using tel: or telprompt: doesn't work here
-        store[3] = hyperlink_formula
         clickable_phone_numbers.append([hyperlink_formula])
 
     # Adding a column to the data for the manually constructed URL for each store on Google Maps for better UX
-    stores[0].append("Google Maps URL")  # adding it to the headers row
-
     hyperlinked_urls = []
-    google_maps_base_url = "https://www.google.com/maps/search/"
-    for store in stores[
-        1:
-    ]:  # skipping over the header row because we've already appended to it
-        url = google_maps_base_url + (store[0] + ", " + store[2]).replace(" ", "+")
+    for store in stores:
+        url = store.google_maps_url
         hyperlink_formula = f'=HYPERLINK("{url}", "Open in Maps")'
-        store.append(hyperlink_formula)
         hyperlinked_urls.append([hyperlink_formula])
 
+    values = transform_stores_list_to_sheet_row_format(stores)
+
     # From A to G because we have 7 features for each store
-    sheet.update(stores, range_name=f"A1:G{num_of_stores}")
+    sheet.update(values, range_name=f"A1:G{num_of_stores+1}")
 
     # Formatting the values for better UX
     white_smoke_rgb = (
@@ -93,7 +91,7 @@ def populate_google_sheet(stores: List[Dict], fetched_phone_numbers: List[str]):
             },
         },
         {
-            "range": f"D2:D{num_of_stores}",
+            "range": f"D2:D{num_of_stores+1}",
             "format": {
                 "textFormat": {
                     "bold": False,
@@ -106,8 +104,10 @@ def populate_google_sheet(stores: List[Dict], fetched_phone_numbers: List[str]):
     sheet.batch_format(formats)
 
     # Update hyperlinks with raw=False to ensure formula evaluation instead of rendering as text
-    sheet.update(hyperlinked_urls, range_name=f"G2:G{num_of_stores}", raw=False)
-    sheet.update(clickable_phone_numbers, range_name=f"D2:D{num_of_stores}", raw=False)
+    sheet.update(hyperlinked_urls, range_name=f"G2:G{num_of_stores+1}", raw=False)
+    sheet.update(
+        clickable_phone_numbers, range_name=f"D2:D{num_of_stores+1}", raw=False
+    )
 
     # For columns:    A ,  B ,  C ,  D ,  E ,  F,   G
     column_widths = [250, 200, 400, 180, 350, 140, 200]  # in pixels
@@ -135,6 +135,7 @@ def populate_google_sheet(stores: List[Dict], fetched_phone_numbers: List[str]):
     return sheet_url
 
 
+# TODO: Update this:
 # Example Usage:
 # stores = [
 #     ["this", "is", "some", "test", "store", "data", "for", "sheets"],
