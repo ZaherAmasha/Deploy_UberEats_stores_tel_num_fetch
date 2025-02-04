@@ -49,8 +49,21 @@ def populate_google_sheet(stores: List[Dict]):
 
     num_of_stores = len(stores)
 
-    # From A to F because we have 6 features for each store
-    sheet.update(stores, range_name=f"A1:F{num_of_stores}")
+    # Adding a column to the data for the manually constructed URL for each store on Google Maps for better UX
+    stores[0].append("Google Maps URL")  # adding it to the headers row
+
+    hyperlinked_urls = []
+    google_maps_base_url = "https://www.google.com/maps/search/"
+    for store in stores[
+        1:
+    ]:  # skipping over the header row because we've already appended to it
+        url = google_maps_base_url + (store[0] + ", " + store[2]).replace(" ", "+")
+        hyperlink_formula = f'=HYPERLINK("{url}", "Open in Maps")'
+        store.append(hyperlink_formula)
+        hyperlinked_urls.append([hyperlink_formula])
+
+    # From A to G because we have 7 features for each store
+    sheet.update(stores, range_name=f"A1:G{num_of_stores}")
 
     # Formatting the values for better UX
     white_smoke_rgb = (
@@ -59,7 +72,7 @@ def populate_google_sheet(stores: List[Dict]):
 
     formats = [
         {
-            "range": "A1:F1",
+            "range": "A1:G1",
             "format": {
                 "textFormat": {
                     "bold": True,
@@ -71,12 +84,24 @@ def populate_google_sheet(stores: List[Dict]):
                 },
             },
         },
+        {
+            "range": f"D2:D{num_of_stores}",
+            "format": {
+                "textFormat": {
+                    "bold": False,
+                },
+            },
+            "hyperlinkDisplayType": "LINKED",
+        },
     ]
     # batch_format is for the formatting
     sheet.batch_format(formats)
 
-    # For columns:    A ,  B ,  C ,  D ,  E ,  F
-    column_widths = [200, 200, 250, 180, 350, 140]  # in pixels
+    # Another update just for the hyperlinks to enforce the rendering
+    sheet.update(hyperlinked_urls, range_name=f"G2:G{num_of_stores}", raw=False)
+
+    # For columns:    A ,  B ,  C ,  D ,  E ,  F,   G
+    column_widths = [250, 200, 400, 180, 350, 140, 200]  # in pixels
     requests = [
         {
             "updateDimensionProperties": {
