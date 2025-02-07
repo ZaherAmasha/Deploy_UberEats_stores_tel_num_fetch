@@ -12,13 +12,16 @@ REQUIREMENTS_FILE="${PROJECT_ROOT}/requirements.txt"
 # Clean up any existing files
 rm -rf python "${OUTPUT_ZIP}" "${VENV_DIR}"
 
-# Create and activate virtual environment
-python${PYTHON_VERSION} -m venv "${VENV_DIR}"
-source "${VENV_DIR}/bin/activate"
-
-# Install packages from requirements file
-pip install --upgrade pip
-pip install -r "${REQUIREMENTS_FILE}"
+# Run the install commands in a subshell to avoid polluting the virtual environment and causing instability
+(
+    # Create and activate virtual environment
+    python${PYTHON_VERSION} -m venv "${VENV_DIR}"
+    source "${VENV_DIR}/bin/activate"
+    
+    # Install packages from requirements file
+    pip install --upgrade pip
+    pip install -r "${REQUIREMENTS_FILE}"
+)
 
 # Create the layer directory structure
 mkdir -p "${LAYER_DIR}"
@@ -30,7 +33,7 @@ cp -r "${VENV_DIR}/lib/python${PYTHON_VERSION}/site-packages/"* "${LAYER_DIR}/"
 zip -r "${OUTPUT_ZIP}" python/
 
 # Clean up
-deactivate
+# deactivate
 rm -rf "${VENV_DIR}" python
 
 echo "Layer creation complete: ${OUTPUT_ZIP}"
