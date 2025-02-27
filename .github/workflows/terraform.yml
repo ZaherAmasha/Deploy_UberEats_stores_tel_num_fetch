@@ -27,6 +27,11 @@ jobs:
       # which are then read and dump into a .env file in the action's context 
       - name: Create .env File
         run: echo "${{ secrets.ENV_FILE_CONTENTS }}" > ../.env
+      
+      - name: Install python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' 
 
       - name: Run Shell Script & Terraform Apply
         run: |
