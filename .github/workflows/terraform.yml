@@ -37,11 +37,10 @@ jobs:
 
       - name: Run Shell Script & Terraform Apply
         run: |
-          cd deployment/scripts
+          cd deployment/
           # This script reads from .env, exports the env variables with TF_VAR_ prefix and 
           # packages the required python packages for the Lambda function layer
-          source ./package.sh
-          cd ../terraform
+          source scripts/package.sh
           terraform init
           terraform plan
           terraform apply -auto-approve
