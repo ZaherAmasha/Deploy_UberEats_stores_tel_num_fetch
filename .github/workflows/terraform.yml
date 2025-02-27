@@ -27,7 +27,7 @@ jobs:
       # which are then read and dump into a .env file in the action's context 
       - name: Create .env File
         run: |
-          echo "${{ secrets.ENV_FILE_CONTENTS }}" > ../.env
+          echo "${{ secrets.ENV_FILE_CONTENTS }}" > ./.env
           tree
 
       - name: Install python
