@@ -38,7 +38,8 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
                 "dynamodb:Query",
                 "dynamodb:BatchWriteItem",
             ]
-            Resource = aws_dynamodb_table.scraped_stores_data.arn
+            Resource = [aws_dynamodb_table.scraped_stores_data.arn,
+                        "${aws_dynamodb_table.scraped_stores_data.arn}/index/status-index"]
         }
         ]
     })

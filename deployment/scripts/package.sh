@@ -1,5 +1,10 @@
 #!/bin/bash
-set -e  # Exit on any error
+# set -e  # Exit on any error
+# LOG_FILE="/tmp/layer_script.log"
+# exec > >(tee -a "$LOG_FILE") 2>&1  # Log both stdout and stderr
+
+# set -e  # Stop on error
+# set -x  # Print commands before execution
 
 # Script configuration
 PYTHON_VERSION="3.11"
@@ -30,7 +35,7 @@ mkdir -p "${LAYER_DIR}"
 cp -r "${VENV_DIR}/lib/python${PYTHON_VERSION}/site-packages/"* "${LAYER_DIR}/"
 
 # Create the zip file with the correct structure
-zip -r "${OUTPUT_ZIP}" python/
+zip -r -q "${OUTPUT_ZIP}" python/
 
 # Clean up
 # deactivate
