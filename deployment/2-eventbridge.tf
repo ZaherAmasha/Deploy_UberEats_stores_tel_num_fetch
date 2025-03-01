@@ -6,7 +6,7 @@ resource "aws_cloudwatch_event_rule" "lambda_schedule" {
   # cron job runs on 1, 10, 19 and 28th of each month at 8:35 pm UTC (10:35 pm Beirut). Ensuring it runs only 4 times a month
   # The randomness in the choice of the hour and minute to run the schedule is to avoid synchronization issues
   # refer to this for more info: https://developers.google.com/maps/documentation/places/web-service/web-services-best-practices
-  schedule_expression = "cron(35 20 1,10,19,28 * ?)"
+  schedule_expression = "cron(35 20 1,10,19,28 * ? *)"
 }
 
 # Set the Lambda function as the target
