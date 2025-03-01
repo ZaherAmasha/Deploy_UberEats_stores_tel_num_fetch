@@ -30,17 +30,23 @@ from google_places_api import get_phone_numbers_for_batch_of_stores
 def lambda_handler(event, context):
     curr_time = time.time()
 
-    stores = get_batch_of_unprocessed_stores(limit=10)
-    logger.info(f"These are the fetched stores: {stores}, {len(stores)}")
+    # stores = get_batch_of_unprocessed_stores(limit=10)
+    # logger.info(f"These are the fetched stores: {stores}, {len(stores)}")
 
     # logger.info(f"Sent the slack message at: {curr_time}")
     # send_fetched_phone_numbers_to_slack_channel()
-    resulting_phone_number = get_phone_numbers_for_batch_of_stores(stores[0])
-    # resulting_phone_number = get_phone_numbers_for_batch_of_stores(stores)
+    # resulting_phone_number = get_phone_numbers_for_batch_of_stores([stores[0]])
+    mock_store = Store.from_dynamodb_item({"name": "hi", "address": "there"})
 
+    resulting_phone_number = get_phone_numbers_for_batch_of_stores([mock_store] * 1000)
+    # resulting_phone_number = get_phone_numbers_for_batch_of_stores(stores)
+    logger.info(f"Fetching the phone numbers took {time.time()-curr_time}")
     # logger.info(f"Finished sending the slack message")
     logger.info(
         f"This is the fetched phone number with Places API inside the lambda handler: {resulting_phone_number}"
     )
 
     return None
+
+
+lambda_handler("hs", "sd")
