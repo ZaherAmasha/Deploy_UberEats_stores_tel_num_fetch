@@ -67,9 +67,20 @@ resource "aws_s3_bucket_policy" "terraform_state" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
-        #   "s3:DeleteObject" # The delete is for the lock state file not for the state file
         ]
         Resource = "${aws_s3_bucket.terraform_state.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "${data.aws_iam_session_context.current.issuer_arn}"
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject" # The delete is for the lock state file not for the state file
+        ]
+        Resource = "${aws_s3_bucket.terraform_state.arn}/*.tflock"
       },
       {
         Effect = "Allow"
