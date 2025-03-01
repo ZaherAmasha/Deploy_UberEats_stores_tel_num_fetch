@@ -6,7 +6,8 @@ resource "aws_ssm_parameter" "google_credentials" {
   # Free tier, enough because this is a private project that runs entirely 
   # within the AWS network and doesn't expose a public URL
   tier = "Standard" 
-  value = base64encode(file("../google_credentials.json")) # ensure proper JSON formatting
+  # value = base64encode(file("../google_credentials.json")) # ensure proper JSON formatting
+    value = replace(jsonencode(file("../google_credentials.json")), "\"", "\\\"")
 }
 
 
