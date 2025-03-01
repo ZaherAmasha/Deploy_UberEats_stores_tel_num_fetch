@@ -37,9 +37,13 @@ data "archive_file" "lambda" {
 
 resource "aws_lambda_function" "lambda" {
     filename = "lambda_function_src.zip"
-    function_name = "python_terraform_lambda"
+    function_name = "prod_UberEats_phone_number_fetch_lambda"
     role = aws_iam_role.iam_for_lambda.arn
-    
+    description = <<EOF
+        Gets a batch of stores from DynamoDB, fetches 
+        their phone numbers using the Google Places API, packages the data into a Google Sheet and sends it to a channel in Slack
+    EOF
+
     source_code_hash = data.archive_file.lambda.output_base64sha256
     handler = "main.lambda_handler"
     runtime = "python3.11"

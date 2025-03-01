@@ -1,7 +1,7 @@
 import time
 
-from utils.logger import logger
 from slack_bot.bot import send_fetched_phone_numbers_to_slack_channel
+from utils.logger import logger
 from utils.google_sheet_utils import populate_google_sheet
 from utils.dynamodb_utils import (
     get_batch_of_unprocessed_stores,
@@ -10,12 +10,14 @@ from utils.dynamodb_utils import (
 from utils.common_utils import inject_phone_numbers_into_stores_list
 from google_places_api import get_phone_numbers_for_batch_of_stores
 
+ITEMS_PER_BATCH = 5
+
 
 def lambda_handler(event, context):
     curr_time = time.time()
     initial_time = curr_time
 
-    stores = get_batch_of_unprocessed_stores(limit=5)
+    stores = get_batch_of_unprocessed_stores(limit=ITEMS_PER_BATCH)
     logger.info(
         f"These are the fetched stores: {stores}, {len(stores)}, fetching them took {time.time()-curr_time:.2f} seconds"
     )
