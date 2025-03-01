@@ -5,15 +5,15 @@ from pydantic import BaseModel, Field, ConfigDict, computed_field
 class Store(BaseModel):
     """Represents a Store with all its attributes"""
 
-    # store_id: str
+    store_id: str
     name: str
     address: str
-    # area_city: str = Field(alias="area/city")
-    # phone_number: Optional[str] = None
-    # description: str
-    # status: str
-    # rating: str
-    # last_processed_at: Optional[str] = None
+    area_city: str = Field(alias="area/city")
+    phone_number: Optional[str] = None
+    description: str
+    status: str
+    rating: str
+    last_processed_at: Optional[str] = None
 
     # This is an attribute of the class Store initialized on initialization of the class, can be accessed with self.google_maps_url
     @computed_field

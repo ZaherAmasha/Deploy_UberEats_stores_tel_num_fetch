@@ -61,7 +61,7 @@ def get_batch_of_unprocessed_stores(limit=1000) -> List[Store]:
             logger.error(f"Error parsing stores: {e}")
 
         logger.debug(
-            f"Called the Scan method {call_count} times, this is the length of the stores so far: {len(stores)}"
+            f"Called the Query method {call_count} times, this is the length of the stores so far: {len(stores)}"
         )
 
         last_evaluated_key = response.get("LastEvaluatedKey")

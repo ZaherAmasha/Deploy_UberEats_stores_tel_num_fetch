@@ -38,6 +38,7 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
                 "dynamodb:Query",
                 "dynamodb:BatchWriteItem",
             ]
+            # need to explicitly allow access to the table and its GSI status-index
             Resource = [aws_dynamodb_table.scraped_stores_data.arn,
                         "${aws_dynamodb_table.scraped_stores_data.arn}/index/status-index"]
         }

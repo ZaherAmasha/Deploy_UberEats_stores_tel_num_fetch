@@ -58,17 +58,39 @@ async def get_phone_number_from_google_maps(
 
         while retry_count < MAX_RETRIES:
             try:
-                await asyncio.sleep(random.uniform(0.1, 2))
+                async with session.post(
+                    search_url, params=params, headers=headers
+                ) as response:
+                    logger.info(
+                        f"This is the response from Places API for query: {query}: {response.text}"
+                    )
 
-                if random.random() < 0.3:  # throw an error 30% of the time
-                    # raise Exception
-                    raise aiohttp.web_exceptions.HTTPTooManyRequests
-                else:
-                    if retry_count == 0:
-                        logger.info(f"Request fulfilled on the first try")
+                    if response.status == 200:
+                        response_json = await response.json()
+                        logger.debug(
+                            f"This is the response from Places API for query: {query}: {response_json}"
+                        )
+
+                        places = response_json.get("places", [])
+                        if places:
+                            # Extract the formatted phone number from the first result
+                            phone_number = places[0].get(
+                                "internationalPhoneNumber", "Phone number not available"
+                            )
+                            logger.info(
+                                f"This is the fetched phone number: {phone_number}"
+                            )
+                            return phone_number
+                        else:
+                            return "No results found"
                     else:
-                        logger.info(f"Request fulfilled on the {retry_count} try")
-                    break
+                        return f"Error: {response.status} - {response.text}"
+
+                if retry_count == 0:
+                    logger.info(f"Request fulfilled on the first try")
+                else:
+                    logger.info(f"Request fulfilled on the {retry_count} try")
+                break
 
             except Exception as e:
                 # retry request with exponential back off
@@ -83,30 +105,6 @@ async def get_phone_number_from_google_maps(
                     f"429 Too Many Requests - Retrying in {wait_time:.2f} seconds..."
                 )
                 await asyncio.sleep(wait_time)
-
-        # async with session.post(search_url, params=params, headers=headers) as response:
-        #     logger.info(
-        #         f"This is the response from Places API for query: {query}: {response.text}"
-        #     )
-
-        #     if response.status == 200:
-        #         response_json = await response.json()
-        #         logger.debug(
-        #             f"This is the response from Places API for query: {query}: {response_json}"
-        #         )
-
-        #         places = response_json.get("places", [])
-        #         if places:
-        #             # Extract the formatted phone number from the first result
-        #             phone_number = places[0].get(
-        #                 "internationalPhoneNumber", "Phone number not available"
-        #             )
-        #             logger.info(f"This is the fetched phone number: {phone_number}")
-        #             return phone_number
-        #         else:
-        #             return "No results found"
-        #     else:
-        #         return f"Error: {response.status} - {response.text}"
 
 
 # we have a max of 600 requests per minute per method per project for Places API (new)
