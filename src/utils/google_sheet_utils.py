@@ -1,23 +1,51 @@
 from typing import List
 import datetime
+import ast
+import json
+import os
 
 import gspread
 from google.oauth2.service_account import Credentials
+import boto3
+from dotenv import load_dotenv
 
 from utils.logger import logger
 from utils.common_utils import transform_stores_list_to_sheet_row_format
 from models.store import Store
 
+load_dotenv()
+
+
+def _fetch_credentials_from_ssm():
+    ssm = boto3.client("ssm", region_name="us-east-1")
+    response = ssm.get_parameter(
+        Name="/UberEatsProject/google_credentials", WithDecryption=False
+    )
+    value = response["Parameter"]["Value"]
+
+    # This is a bit of an adhoc parsing of the json string data, mainly because it's passed a String
+    # rather than SecureString with SSM. In the terraform code for SSM, double quotes are being
+    # escaped manually, in which here the process is reversed. This process is needed to be able
+    # to get a valid JSON string format to be parsed into JSON.
+    transform_s = ast.literal_eval("'%s'" % value).replace('\\"', '"')
+
+    # If the value starts with a quote and ends with a quote, strip them. This is also needed
+    if transform_s.startswith('"') and transform_s.endswith('"'):
+        transform_s = transform_s[1:-1]
+    return json.loads(transform_s)
+
 
 def _create_google_sheet():
 
-    credentials_file_path = "./google_credentials.json"
-    google_drive_folderID = "1ZJCW16eNJDYoNZOs7jwiBaEnnIvTRr5l"
+    # credentials_file_path = "./google_credentials.json"
+    google_drive_folderID = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    creds = Credentials.from_service_account_file(credentials_file_path, scopes=scopes)
+    credentials_json = _fetch_credentials_from_ssm()
+    creds = Credentials.from_service_account_info(credentials_json, scopes=scopes)
+    # creds = Credentials.from_service_account_file(credentials_file_path, scopes=scopes)
     client = gspread.authorize(creds)
 
     # Get current day of creation and add it to the name
