@@ -31,6 +31,7 @@ jobs:
           tree
       
       # Construct the google_credentials.json file in a similar way as the .env file, it's saved as a string
+      # use single quotes to avoid escaping special characters, double quotes don't work here
       - name: Create google_credentials.json File
         run: |
           echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
