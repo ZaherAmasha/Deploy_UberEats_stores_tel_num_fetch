@@ -33,7 +33,7 @@ jobs:
       # Construct the google_credentials.json file in a similar way as the .env file, it's saved as a string
       - name: Create google_credentials.json File
         run: |
-          echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > google_credentials.json
+          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > google_credentials.json
 
       - name: Install python
         uses: actions/setup-python@v5
