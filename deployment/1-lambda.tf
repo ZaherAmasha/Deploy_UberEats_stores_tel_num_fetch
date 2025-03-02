@@ -49,7 +49,7 @@ resource "aws_lambda_function" "lambda" {
     runtime = "python3.11"
     layers = [aws_lambda_layer_version.python_site_packages_layer.arn]
     timeout = 600 # 600 seconds = 10 minutes
-    memory_size  = 128
+    memory_size  = 256 # to be fine-tuned later
     timeouts {
         create = "20m"
         update = "20m"
