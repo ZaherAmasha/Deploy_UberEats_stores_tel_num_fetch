@@ -1,6 +1,5 @@
 import boto3
 from typing import List
-import time
 from datetime import datetime
 
 # for type hinting, using the boto3 stubs library. See this for more info:
@@ -80,7 +79,6 @@ def get_batch_of_unprocessed_stores(limit=1000) -> List[Store]:
 
 
 def update_status_of_items_to_processed_in_DB(stores: List[Store]):
-    start_time = time.time()
 
     with table.batch_writer() as batch:
         for store in stores:
@@ -89,9 +87,6 @@ def update_status_of_items_to_processed_in_DB(stores: List[Store]):
             batch.put_item(store.to_dynamodb_item())
 
     logger.info(f"Updated {len(stores)} stores' status to processed in DynamoDB")
-    logger.info(
-        f"Updating the status of the processed items took {time.time()-start_time} seconds"
-    )
 
 
 # To update the status of the processed items in DynamoDB, we can consider 2 main ways: updating each item one by one

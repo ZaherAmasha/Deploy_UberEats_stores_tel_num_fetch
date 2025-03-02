@@ -10,7 +10,7 @@ from utils.dynamodb_utils import (
 from utils.common_utils import inject_phone_numbers_into_stores_list
 from google_places_api import get_phone_numbers_for_batch_of_stores
 
-ITEMS_PER_BATCH = 5
+ITEMS_PER_BATCH = 1000
 
 
 def lambda_handler(event, context):
